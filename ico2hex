@@ -1,0 +1,10 @@
+#!/usr/bin/env sh
+
+cat << EOF
+
+// automatically generated array - DO NOT EDIT!
+var favicon = [...]byte {
+EOF
+
+hexdump -v -e '"\t" 8/1 "0x%02X, " "\n"' "$1" | sed 's/0x  ,//g'
+echo \}
