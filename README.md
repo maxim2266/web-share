@@ -25,9 +25,10 @@ Finally, copy the resulting binary `web-share` to any location listed on your `P
 environment variable.
 
 ### Usage
-The most basic usage is just to `cd` to a directory and type `web-share`. This will start
-an HTTP file server, listening on `localhost`, port 8080. Directing the browser to
-`http://<your-IP>:8080` will list all files in the directory.
+The most basic usage is just to `cd` to a directory and type `web-share -i lo`. This will start
+an HTTP file server, listening on `127.0.0.1:8080`. Directing the browser to
+`http://127.0.0.1:8080` will list all files in the directory. On Linux all the available network
+interfaces can be found using `ip address` command.
 
 Command line options:
 ```sh
