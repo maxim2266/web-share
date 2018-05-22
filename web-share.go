@@ -51,8 +51,8 @@ func main() {
 	var itf, dir string
 	var port uint
 
-	gnuflag.StringVar(&itf, "interface", "", "Network interface to run the server on.")
-	gnuflag.StringVar(&itf, "i", "", "Network interface to run the server on.")
+	gnuflag.StringVar(&itf, "interface", "", "(required) Network interface to run the server on.")
+	gnuflag.StringVar(&itf, "i", "", "(required) Network interface to run the server on.")
 
 	gnuflag.UintVar(&port, "port", defaultPort, "Network port number to listen on.")
 	gnuflag.UintVar(&port, "p", defaultPort, "Network port number to listen on.")
@@ -70,10 +70,12 @@ func main() {
 	// build address
 	var addr string
 
-	if len(itf) > 0 && itf != "localhost" {
-		if addr = findIP(itf); len(addr) == 0 {
-			die("Cannot find IPv4 address of "+itf, nil)
-		}
+	if len(itf) == 0 {
+		die("Network interface is not specified", nil)
+	}
+
+	if addr = findIP(itf); len(addr) == 0 {
+		die("Cannot find IPv4 address of "+itf, nil)
 	}
 
 	addr += ":" + uintToString(port)
