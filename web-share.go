@@ -30,6 +30,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"log"
 	"net"
 	"net/http"
@@ -40,11 +41,10 @@ import (
 	"time"
 
 	"github.com/juju/gnuflag"
+	"github.com/maxim2266/mvr"
 )
 
 const defaultPort = 8080
-
-var trace = log.New(os.Stderr, "", log.LstdFlags)
 
 func main() {
 	// command line parameters
@@ -78,13 +78,19 @@ func main() {
 		die("Cannot find IPv4 address of "+itf, nil)
 	}
 
-	addr += ":" + uintToString(port)
-	trace.Println("Listening on", addr)
+	mvr.Run(func() int {
+		addr += ":" + uintToString(port)
+		log.Println("Listening on", addr)
 
-	// start the server
-	if err := run(addr, serveFrom(dir)); err != nil {
-		trace.Fatalln(err)
-	}
+		// start the server
+		if err := serve(addr, serveFrom(dir)); err != nil {
+			log.Println(err)
+			return 1
+		}
+
+		return 0
+	})
+
 }
 
 func findIP(itf string) string {
@@ -118,21 +124,36 @@ func findIP(itf string) string {
 	return ""
 }
 
-func run(addr string, handler http.Handler) error {
+func serve(addr string, handler http.Handler) error {
 	srv := &http.Server{
 		Addr:           addr,
 		Handler:        handler,
 		ReadTimeout:    time.Hour, // just to make sure it expires eventually
 		WriteTimeout:   time.Hour,
 		MaxHeaderBytes: 1 << 18, // we don't expect big headers
-		ErrorLog:       trace,
 		ConnState: func(conn net.Conn, state http.ConnState) {
 			if state == http.StateClosed {
-				trace.Println(conn.RemoteAddr(), "Closed")
+				log.Println(conn.RemoteAddr(), "Closed")
 			}
 		},
 	}
 
+	// terminarion handler
+	stop := mvr.Cancel
+
+	mvr.Cancel = func() {
+		ctx, cancel := context.WithTimeout(mvr.Context(), 10*time.Second)
+
+		defer cancel()
+
+		if err := srv.Shutdown(ctx); err != nil {
+			log.Println(err)
+		}
+
+		stop()
+	}
+
+	// serve
 	return srv.ListenAndServe() // list all open ports: netstat -lntu
 }
 
@@ -141,7 +162,7 @@ var faviconTS = time.Now()
 func serveFrom(dir string) http.HandlerFunc {
 	// get absolute path to the root directory
 	root := absPath(dir)
-	trace.Println("Serving files from", root)
+	log.Println("Serving files from", root)
 
 	// create file server
 	server := http.FileServer(http.Dir(root))
@@ -154,15 +175,15 @@ func serveFrom(dir string) http.HandlerFunc {
 
 		if err != nil {
 			http.Error(resp, "Invalid URI", http.StatusBadRequest)
-			trace.Println(req.RemoteAddr, "Invalid URI:", err)
+			log.Println(req.RemoteAddr, "Invalid URI:", err)
 			return
 		}
 
 		// log the request
 		if rng := req.Header.Get("Range"); len(rng) > 0 && rng != "bytes=0-" {
-			trace.Println(req.RemoteAddr, req.Method, shortenURI(uri), rng)
+			log.Println(req.RemoteAddr, req.Method, shortenURI(uri), rng)
 		} else {
-			trace.Println(req.RemoteAddr, req.Method, shortenURI(uri))
+			log.Println(req.RemoteAddr, req.Method, shortenURI(uri))
 		}
 
 		// serve
