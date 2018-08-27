@@ -11,7 +11,8 @@ software development. I am just leaving the code here for reference.
 Assuming that Go is already installed and configured, from the directory of the project,
 first install the project dependency:
 ```sh
-go get -u github.com/juju/gnuflag
+go get github.com/juju/gnuflag
+go get github.com/maxim2266/mvr
 ```
 Then compile the program:
 ```sh
@@ -42,4 +43,4 @@ Usage of web-share:
     Network port number to listen on.
 ```
 
-###### Tested on Linux Mint 18 using Go v1.7.3.
+###### Tested on Linux Mint 18.3 using Go v1.10.3.
