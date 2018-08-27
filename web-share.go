@@ -139,19 +139,17 @@ func serve(addr string, handler http.Handler) error {
 	}
 
 	// terminarion handler
-	stop := mvr.Cancel
+	mvr.Go(func() {
+		<-mvr.Done()
 
-	mvr.Cancel = func() {
-		ctx, cancel := context.WithTimeout(mvr.Context(), 10*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 
 		defer cancel()
 
 		if err := srv.Shutdown(ctx); err != nil {
 			log.Println(err)
 		}
-
-		stop()
-	}
+	})
 
 	// serve
 	return srv.ListenAndServe() // list all open ports: netstat -lntu
