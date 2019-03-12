@@ -138,14 +138,8 @@ func serve(addr string, handler http.Handler) error {
 		},
 	}
 
-	// terminarion handler
-	mvr.Go(func() {
-		<-mvr.Done()
-
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-
-		defer cancel()
-
+	// termination handler
+	mvr.OnCancel(0, func(ctx context.Context) {
 		if err := srv.Shutdown(ctx); err != nil {
 			log.Println(err)
 		}
