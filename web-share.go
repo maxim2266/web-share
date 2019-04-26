@@ -159,8 +159,11 @@ func serveFrom(dir string) http.HandlerFunc {
 	// create file server
 	server := http.FileServer(http.Dir(root))
 
+	// server name
+	serverName := filepath.Base(os.Args[0])
+
 	return func(resp http.ResponseWriter, req *http.Request) {
-		resp.Header().Set("Server", "web-share")
+		resp.Header().Set("Server", serverName)
 
 		// check URI
 		uri, err := url.QueryUnescape(req.RequestURI)
