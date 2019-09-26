@@ -1,0 +1,2 @@
+exec go build -ldflags "-s -w" "$@"
+
